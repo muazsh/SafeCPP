@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-#include <array>
 #include <mutex>
 #include <memory>
 
@@ -120,9 +119,7 @@ namespace std {
         }
 
         safe_iterator<C, T> operator+(const int offset) const noexcept {
-            safe_iterator<C, T> result(container_);
-            result.index_ = index_ + offset * static_cast<int>(direction_);
-            return result;
+            return safe_iterator<C, T>(container_, mutex_, index_ + offset * static_cast<int>(direction_), direction_);
         }
 
         safe_iterator<C, T> operator-(const int offset) const noexcept {
@@ -147,7 +144,7 @@ namespace std {
             if (index_ < 0) {
                 throw std::out_of_range("Iterator out of range.");
             }
-            return container_.lock()->at(index_);
+            return *container_.lock()->at(index_);
         }
 
         bool operator==(const safe_iterator<C, T>& other) const noexcept {
@@ -187,72 +184,76 @@ namespace std {
         }
     };
 
-    template<typename T>
-    struct type_false : std::false_type
-    { };
-
     template<class T>
     class safe_vector {
-        std::shared_ptr<std::vector<T>> vector_ = {};
+        using TPtr = std::unique_ptr<T>;
+        std::shared_ptr<std::vector<TPtr>> vector_ = {};
         std::shared_ptr<std::mutex> mutex_ = {};
-        std::vector<T>::const_iterator get_corresponding_internal_iterator(safe_iterator<safe_vector, T> const& itr) {
+        std::vector<TPtr>::iterator get_corresponding_internal_iterator(safe_iterator<std::vector<TPtr>, T> const& itr) {
             return vector_->begin() + itr.get_index();
         }
     public:
-        safe_vector() : vector_( std::make_shared<std::vector<T>>()), mutex_(make_shared<std::mutex>()) {}
-        safe_vector(std::initializer_list<T> l) : vector_(std::make_shared<std::vector<T>>(l)), mutex_(make_shared<std::mutex>()) {}
-        safe_iterator<std::vector<T>, T> begin() {
-            return safe_iterator<std::vector<T>, T>(vector_, mutex_, 0, direction::forward);
+        safe_vector() : vector_( std::make_shared<std::vector<TPtr>>()), mutex_(make_shared<std::mutex>()) {}
+        safe_vector(std::initializer_list<T> l) : mutex_(make_shared<std::mutex>()) 
+        {
+            vector_ = std::make_shared<std::vector<TPtr>>();
+            vector_->reserve(l.size());
+            for (auto& value : l) {
+                vector_->emplace_back(std::make_unique<T>(value));
+            }
         }
-        safe_iterator<const std::vector<T>, const T> cbegin() {
-            return safe_iterator<const std::vector<T>, const T>(vector_, mutex_, 0, direction::forward);
+        safe_iterator<std::vector<TPtr>, T> begin() {
+            return safe_iterator<std::vector<TPtr>, T>(vector_, mutex_, 0, direction::forward);
         }
-        safe_iterator<std::vector<T>, T> rbegin() {
-            return safe_iterator<std::vector<T>, T>(vector_, mutex_, vector_->size() == 0 ? 0 : vector_->size() - 1, direction::backward);
+        safe_iterator<const std::vector<TPtr>, const T> cbegin() {
+            return safe_iterator<const std::vector<TPtr>, const T>(vector_, mutex_, 0, direction::forward);
         }
-        safe_iterator<const std::vector<T>, const T> crbegin() {
-            return safe_iterator<const std::vector<T>, const T>(vector_, mutex_, vector_->size() == 0 ? 0 : vector_->size() - 1, direction::backward);
+        safe_iterator<std::vector<TPtr>, T> rbegin() {
+            return safe_iterator<std::vector<TPtr>, T>(vector_, mutex_, vector_->size() == 0 ? 0 : vector_->size() - 1, direction::backward);
         }
-        safe_iterator<std::vector<T>, T> end() {
-            return safe_iterator<std::vector<T>, T>(vector_, mutex_, vector_->size(), direction::forward);
+        safe_iterator<const std::vector<TPtr>, const T> crbegin() {
+            return safe_iterator<const std::vector<TPtr>, const T>(vector_, mutex_, vector_->size() == 0 ? 0 : vector_->size() - 1, direction::backward);
         }
-        safe_iterator<const std::vector<T>, const T> cend() {
-            return safe_iterator<const std::vector<T>, const T>(vector_, mutex_, vector_->size(), direction::forward);
+        safe_iterator<std::vector<TPtr>, T> end() {
+            return safe_iterator<std::vector<TPtr>, T>(vector_, mutex_, vector_->size(), direction::forward);
         }
-        safe_iterator<std::vector<T>, T> rend() {
-            return safe_iterator<std::vector<T>, T>(vector_, mutex_, -1, direction::backward);
+        safe_iterator<const std::vector<TPtr>, const T> cend() {
+            return safe_iterator<const std::vector<TPtr>, const T>(vector_, mutex_, vector_->size(), direction::forward);
         }
-        safe_iterator<const std::vector<T>, const T> crend() {
-            return safe_iterator<const std::vector<T>, const T>(vector_, mutex_, -1, direction::backward);
+        safe_iterator<std::vector<TPtr>, T> rend() {
+            return safe_iterator<std::vector<TPtr>, T>(vector_, mutex_, -1, direction::backward);
+        }
+        safe_iterator<const std::vector<TPtr>, const T> crend() {
+            return safe_iterator<const std::vector<TPtr>, const T>(vector_, mutex_, -1, direction::backward);
         }
         T& operator[](const size_t index) {
-            return vector_->at(index);
+            return *vector_->at(index);
         }
         const T& operator[](const size_t index) const {
-            return vector_->at(index);
+            return *vector_->at(index);
         }
 
         T& at(const size_t index) {
-            return vector_->at(index);
+            return *vector_->at(index);
         }
         const T& at(const size_t index) const {
-            return vector_->at(index);
+            return *vector_->at(index);
         }
 
         T& front() {
-            return vector_->at(0);
+            return *vector_->at(0);
         }
         const T& front() const {
-            return vector_->at(0);
+            return *vector_->at(0);
         }
 
         T& back() {
-            std::lock_guard<std::mutex> guard(mutex_);
-            return vector_->at(vector_->size() - 1);
+            std::lock_guard<std::mutex> guard(*mutex_);
+            return *vector_->at(vector_->size() - 1);
         }
         const T& back() const {
-            std::lock_guard<std::mutex> guard(mutex_);
-            return vector_->at(vector_->size() - 1);
+            std::lock_guard<std::mutex> guard(*mutex_);
+            return *vector_->at(vector_->size() - 1);
         }
 
         bool empty() const noexcept {
@@ -267,82 +268,84 @@ namespace std {
             vector_->clear();
         }
 
-        safe_iterator<safe_vector, T> insert(const safe_iterator<safe_vector, T>& pos, const T& value) {
-            std::lock_guard<std::mutex> guard(mutex_);
+        safe_iterator<std::vector<TPtr>, T> insert(const safe_iterator<std::vector<TPtr>, T>& pos, const T& value) {
+            std::lock_guard<std::mutex> guard(*mutex_);
             auto result_itr = pos;
             auto itr = get_corresponding_internal_iterator(pos);
-            auto insert_itr = vector_->insert(itr, value);
+            auto insert_itr = vector_->insert(itr, std::make_unique<T>(value));
             result_itr.set_index(std::distance(vector_->begin(), insert_itr));
             return result_itr;
         }
 
-        safe_iterator<safe_vector, T> insert(const safe_iterator<safe_vector, T>& pos, T&& value) {
-            std::lock_guard<std::mutex> guard(mutex_);
+        safe_iterator<std::vector<TPtr>, T> insert(const safe_iterator<std::vector<TPtr>, T>& pos, T&& value) {
+            std::lock_guard<std::mutex> guard(*mutex_);
             auto result_itr = pos;
             auto itr = get_corresponding_internal_iterator(pos);
-            auto insert_itr = vector_->insert(itr, std::move(value));
+            auto insert_itr = vector_->insert(itr, std::make_unique<T>(std::move(value)));
             result_itr.set_index(std::distance(vector_->begin(), insert_itr));
             return result_itr;
         }
 
-        safe_iterator<safe_vector, T> insert(const safe_iterator<safe_vector, T>& pos, std::size_t count, const T& value) {
-            std::lock_guard<std::mutex> guard(mutex_);
+        safe_iterator<std::vector<TPtr>, T> insert(const safe_iterator<std::vector<TPtr>, T>& pos, std::size_t count, const T& value) {
+            std::lock_guard<std::mutex> guard(*mutex_);
             auto result_itr = pos;
             auto itr = get_corresponding_internal_iterator(pos);
-            auto insert_itr = vector_->insert(itr, count, value);
+            auto insert_itr = vector_->insert(itr, count, std::make_unique<T>(value));
             result_itr.set_index(std::distance(vector_->begin(), insert_itr));
             return result_itr;
         }
 
-        template< class InputIt >
-        safe_iterator<safe_vector, T> insert(const safe_iterator<safe_vector, T>& pos, InputIt first, InputIt last) {
+        /*template< class InputIt >
+        safe_iterator<std::vector<TPtr>, T> insert(const safe_iterator<std::vector<TPtr>, T>& pos, InputIt first, InputIt last) {
             std::lock_guard<std::mutex> guard(mutex_);
             auto result_itr = pos;
             auto itr = get_corresponding_internal_iterator(pos);
             auto insert_itr = vector_->insert(itr, first, last);
             result_itr.set_index(std::distance(vector_->begin(), insert_itr));
             return result_itr;
-        }
+        }*/
 
-        safe_iterator<safe_vector, T> insert(const safe_iterator<safe_vector, T>& pos, std::initializer_list<T> ilist) {
-            std::lock_guard<std::mutex> guard(mutex_);
+        safe_iterator<std::vector<TPtr>, T> insert(const safe_iterator<std::vector<TPtr>, T>& pos, std::initializer_list<T> ilist) {
+            std::lock_guard<std::mutex> guard(*mutex_);
             auto result_itr = pos;
             auto itr = get_corresponding_internal_iterator(pos);
-            auto insert_itr = vector_->insert(itr, ilist);
-            result_itr.set_index(std::distance(vector_->begin(), insert_itr));
+            for (auto& value : ilist) {
+                itr = vector_->insert(itr, std::make_unique<T>(value)) + 1;
+            }
+            result_itr.set_index(std::distance(vector_->begin(), itr));
             return result_itr;
         }
 
         template< class... Args >
-        safe_iterator<safe_vector, T> emplace(const safe_iterator<safe_vector, T>& pos, Args&&... args) {
-            std::lock_guard<std::mutex> guard(mutex_);
+        safe_iterator<std::vector<TPtr>, T> emplace(const safe_iterator<std::vector<TPtr>, T>& pos, Args&&... args) {
+            std::lock_guard<std::mutex> guard(*mutex_);
             auto result_itr = pos;
             auto itr = get_corresponding_internal_iterator(pos);
-            auto insert_itr = vector_->emplace(itr, args);
+            auto insert_itr = vector_->emplace(itr, std::make_unique<T>(args...));
             result_itr.set_index(std::distance(vector_->begin(), insert_itr));
             return result_itr;
         }
 
         void push_back(const T& value) {
-            std::lock_guard<std::mutex> guard(mutex_);
-            vector_->push_back(value);
+            std::lock_guard<std::mutex> guard(*mutex_);
+            vector_->push_back(std::make_unique<T>(value));
         }
         void push_back(T&& value) {
-            std::lock_guard<std::mutex> guard(mutex_);
-            vector_->push_back(std::move(value));
+            std::lock_guard<std::mutex> guard(*mutex_);
+            vector_->push_back(std::make_unique<T>(std::move(value)));
         }
 
         template< class... Args >
         void emplace_back(Args&&... args) {
-            std::lock_guard<std::mutex> guard(mutex_);
-            vector_->emplace_back(args);
+            std::lock_guard<std::mutex> guard(*mutex_);
+            vector_->emplace_back(std::make_unique<T>(args...));
         }
        
         void pop_back() {
-            std::lock_guard<std::mutex> guard(mutex_);
+            std::lock_guard<std::mutex> guard(*mutex_);
             vector_->pop_back();
         }
     };
 
-#define vector safe_vector
+//#define vector safe_vector
 }
