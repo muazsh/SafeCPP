@@ -6,15 +6,19 @@
 
     int main() {
         try {
+            // calling front() on an empty vector.
+
             std::safe_vector<int> v;
             auto front = v.front();
         }
-        catch (std::exception e) {
+        catch (std::exception const& e) {
             std::cout << "calling front() on an empty vector:" << std::endl;
             std::cout << e.what() << std::endl;
         }
 
         {
+            // iterator of an invalid vector.
+
             std::safe_vector<int> v = { 1, 2, 3, 4, 5 };
             auto it = v.begin();
             {
@@ -24,22 +28,46 @@
             try {
                 auto val = *it;
             }
-            catch (std::exception e) {
+            catch (std::exception const& e) {
                 std::cout << "dereferncing iterator of a destroyed vector:" << std::endl;
                 std::cout << e.what() << std::endl;
             }
         }
 
        try {
+           // dereferncing out of range iterator.
+
            std::safe_vector<int> v = { 1, 2, 3, 4, 5 };
            auto itr = --v.begin();
            auto val = *itr;
        }
-       catch (std::exception e) {
+       catch (std::exception const& e) {
            std::cout << "dereferncing out of range iterator:" << std::endl;
            std::cout << e.what() << std::endl;
        }
+
        {
+           // iterator arithmetic.
+
+           std::safe_vector<int> v = { 1, 2, 3, 4, 5 };
+           auto itr = v.begin();
+           assert(*itr == 1);
+           itr += 2;
+           assert(*itr == 3);
+           itr = itr - 2;
+           assert(*itr == 1);
+           itr++;
+           assert(*itr == 2);
+           itr--;
+           assert(*itr == 1);
+           itr += 3;
+           itr -= 2;
+           assert(*itr == 2);
+       }
+
+       {
+           // forward/backward iterators.
+            
            std::safe_vector<int> v = { 1, 2, 3, 4, 5 };
            size_t index = 0;
            for (auto itr = v.cbegin(); itr != v.cend(); itr++) {
@@ -54,6 +82,8 @@
        }
 
        {
+           // insert initialization list.
+
            std::safe_vector<int> v = { 1, 2, 3, 4, 5 };
            auto& val = v[3];
            assert(val == 4);
@@ -67,6 +97,8 @@
        }
 
        {
+           // push_back, emplace_back and emplace.
+
            struct MyStruct {
                int x;
                int y;
@@ -86,6 +118,21 @@
            assert(v.size() == 6);
            assert(v[1].x == 0);
            assert(v[1].y == 0);
+       }
+
+       {
+           // pop_back.
+
+           std::safe_vector<int> v = { 1, 2, 3, 4, 5 };
+           auto itr = --v.end();
+           v.pop_back();
+           try {
+               auto& val = *itr;
+           }
+           catch (std::exception const& e) {
+               std::cout << "dereferncing iterator at popped element:" << std::endl;
+               std::cout << e.what() << std::endl;
+           }
        }
 
     }

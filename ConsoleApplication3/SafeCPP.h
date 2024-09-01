@@ -257,14 +257,17 @@ namespace std {
         }
 
         bool empty() const noexcept {
+            std::lock_guard<std::mutex> guard(*mutex_);
             return vector_->empty();
         }
 
         size_t size() const noexcept {
+            std::lock_guard<std::mutex> guard(*mutex_);
             return vector_->size();
         }
 
         void clear() noexcept {
+            std::lock_guard<std::mutex> guard(*mutex_);
             vector_->clear();
         }
 
@@ -294,16 +297,6 @@ namespace std {
             result_itr.set_index(std::distance(vector_->begin(), insert_itr));
             return result_itr;
         }
-
-        /*template< class InputIt >
-        safe_iterator<std::vector<TPtr>, T> insert(const safe_iterator<std::vector<TPtr>, T>& pos, InputIt first, InputIt last) {
-            std::lock_guard<std::mutex> guard(mutex_);
-            auto result_itr = pos;
-            auto itr = get_corresponding_internal_iterator(pos);
-            auto insert_itr = vector_->insert(itr, first, last);
-            result_itr.set_index(std::distance(vector_->begin(), insert_itr));
-            return result_itr;
-        }*/
 
         safe_iterator<std::vector<TPtr>, T> insert(const safe_iterator<std::vector<TPtr>, T>& pos, std::initializer_list<T> ilist) {
             std::lock_guard<std::mutex> guard(*mutex_);
