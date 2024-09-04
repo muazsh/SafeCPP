@@ -68,8 +68,8 @@ jobs:
       # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: |
-          if [[ "${{ matrix.os }}" == 'ubuntu-latest' ]]; then
+          if [ "${{ matrix.os }}" == 'ubuntu-latest' ]; then
             ./SafeCPP
-          elif [[ "${{ matrix.os }}" == 'windows-latest' ]]; then
+          else
             SafeCPP.exe
           fi
