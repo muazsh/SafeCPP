@@ -71,6 +71,6 @@ jobs:
           if [ "${{ matrix.os }}" == 'ubuntu-latest' ]; then
             ./SafeCPP
           else
-            ./SafeCPP.exe
+            ./Release/SafeCPP.exe
           fi
       shell: bash
