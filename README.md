@@ -21,16 +21,22 @@ An std::vector wrapper which is:
 - Uses `safe_iterator`.
 
 ## Limitations
-The compile-time prevention includes the ones I am aware so far, also the usage of other variations which make bound-checks has a performance overhead, also `safe_iterator` and `safe_vector` have performance overhead obviously. However, to secure C++ such acts are unavoidable, also due to hardware development nowadays such performance issue should be neglectable for most usages.
+The compile-time prevention includes the ones I am aware so far, also the usage of other variations which make bound-checks has a performance overhead, also `safe_iterator` and `safe_vector` have performance overhead obviously. However, to secure C++ such acts are unavoidable, also **due to hardware development nowadays such performance overhead should be neglectable for most usages**.
 
 ## Recommendations
 - Do not use raw pointers or allocate memory manually, always use a proper smart pointer/container instead.
 - Do not expose a smart pointer's raw pointer.
 - Do not use language functions which operate on buffers and make no bound-checks.
 - Do not use pointer/iterator arithmetic.
+- Do not store a container iterator.
 - Do not use C-style array.
 - Do not use [] operator to access a container element, it makes no bound check.
-- Do not store a container iterator.
 - Do not assign an rvalue to an std::string_view.
 - Always intialize variables.
--  
+- Always consider passing arguments by const&.
+- Do not store references.
+- Be aware when lambda caputring by refernece, they are reference states internally.
+- Do not use C-Style cast, const_cast or reinterpret_cast.
+- Always check for nullptr after dynamic_cast.
+- Be aware when using static_cast to down cast.
+- Use ranges and range-based loops instead of raw loops whenever possible. 
