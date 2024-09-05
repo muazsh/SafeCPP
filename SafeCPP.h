@@ -81,19 +81,19 @@ namespace std {
     private:
         std::weak_ptr<C> container_;
         std::shared_ptr<std::mutex> mutex_;
-        int index_;
+        __int64 index_;
         direction direction_;
 
     public:
-        safe_iterator(std::weak_ptr<C> container, std::shared_ptr<std::mutex> mutex, int ind, direction dir) : 
+        safe_iterator(std::weak_ptr<C> container, std::shared_ptr<std::mutex> mutex, __int64 ind, direction dir) :
             container_(std::move(container)),
             mutex_(std::move(mutex)), 
             index_(ind), 
             direction_(dir) {}
-        int get_index() const noexcept {
+        __int64 get_index() const noexcept {
             return index_;
         }
-        void set_index(int index) noexcept {
+        void set_index(__int64 index) noexcept {
             index_ = index;
         }
         safe_iterator<C, T>& operator++() noexcept {
