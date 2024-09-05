@@ -1,5 +1,5 @@
 # Safe C++
-C++ is unsafe by design, and unless it is subsetted or wrapped by some meanings softwares developed in C++ will mostly be vulnerable, for that in introduce `SafeCPP.h`:
+C++ is unsafe by design, and unless it is subsetted or wrapped by some means, softwares developed in C++ will mostly be vulnerable, for that in introduce `SafeCPP.h`:
 
 ## `SafeCPP.h`
 This header provides:
