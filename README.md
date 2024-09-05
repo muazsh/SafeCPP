@@ -1,3 +1,4 @@
+[![CMake on multiple platforms](https://github.com/muazsh/SafeCPP/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/muazsh/SafeCPP/actions/workflows/cmake-multi-platform.yml)
 # Safe C++
 C++ is unsafe by design, and unless it is subsetted or wrapped by some means, softwares developed in C++ will mostly be vulnerable, for that in introduce `SafeCPP.h`:
 
