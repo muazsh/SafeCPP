@@ -1,6 +1,6 @@
 [![CMake on multiple platforms](https://github.com/muazsh/SafeCPP/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/muazsh/SafeCPP/actions/workflows/cmake-multi-platform.yml)
 # Safe C++
-C++ is unsafe by design, and unless it is subsetted or wrapped by some means, softwares developed in C++ will mostly be vulnerable, for that in introduce `SafeCPP.h`:
+C++ is unsafe by design, and unless it is subsetted or wrapped by some means, softwares developed in C++ will mostly be vulnerable, for that I introduce `SafeCPP.h`:
 
 ## `SafeCPP.h`
 This header provides:
@@ -31,13 +31,13 @@ The compile-time prevention includes the ones I am aware so far, also the usage 
 - Do not use pointer/iterator arithmetic.
 - Do not store a container iterator.
 - Do not use C-style array.
-- Do not use [] operator to access a container element, it makes no bound check.
-- Do not assign an rvalue to an std::string_view.
+- Do not use `[]` operator to access a container element, it makes no bound check.
+- Do not assign an **rvalue** to an `std::string_view`.
 - Always intialize variables.
-- Always consider passing arguments by const&.
+- Always consider passing arguments by `const&`.
 - Do not store references.
 - Be aware when lambda caputring by refernece, they are reference states internally.
-- Do not use C-Style cast, const_cast or reinterpret_cast.
-- Always check for nullptr after dynamic_cast.
-- Be aware when using static_cast to down cast.
+- Do not use **C-Style cast**, `const_cast` or `reinterpret_cast`.
+- Always check for `nullptr` after `dynamic_cast`.
+- Be aware when using `static_cast` to down cast.
 - Use ranges and range-based loops instead of raw loops whenever possible. 
